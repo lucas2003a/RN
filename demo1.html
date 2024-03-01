@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <!-- Librería ML5 -->
+  <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+
+</head>
+<body>
+
+  <img src="./images/elefante.jpg" alt="" id="imagen">
+
+  <div id="resultado"></div>
+  
+  <script>
+
+    //console.log("Versión ML5",ml5.version);
+    //Incializar objeto de análzis de imagen
+    const classifier = ml5.imageClassifier("MobileNet",modelLoaded);
+    const capaResultado = document.querySelector("#resultado");
+
+    function modelLoaded(){
+      console.log("Modelo cargado correctamente");
+    }
+
+    //classify(VALOR_ENTRADA, RETORNO[ERROR, RESULTADO])
+    classifier.classify(document.querySelector("#imagen"), (err, result) =>{
+      console.log(result);
+
+      const porcentaje = result[0].confidence.toFixed(2)*100;
+      const etiqueta   = result[0].confidence;
+
+      capaResultado.innerHTML = `Nombre: ${result[0].label}, probabilidad: ${porcentaje}%`;
+    });
+  </script>
+</body>
+</html>

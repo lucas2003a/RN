@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Manipular DOM -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+  
+  <!-- ML5 -->
+  <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+  <title>Canvas</title>
+</head>
+<body>
+  <style>
+    body{
+      background-color: aqua;
+  }
+  </style>
+
+  <!-- Todo el contenido será creado de forma dinámica con P5.js -->
+
+  <script>
+
+    //Objetos públicos
+    let classifier;   //Modelo(Red neuronal)
+    let canvas;       //Lienzo donde dibujaremos
+    let label;        //Objeto identificado
+    let confidence;   //Nivel de confianza %
+
+    //Funciones predeterminadas - P5.js
+    function preload(){
+      //Cargamos DoodleNet - red neuronal
+      classifier = ml5.imageClassifier("DoodleNet");
+    }
+
+    //Funciones predeterminadas - P5.js
+    function setup(){
+      //Creamos un canvas (lienzo)
+      canvas = createCanvas(280, 280);
+
+      //Asignar color (un canal = GRIS | 3 canales = RGB)
+      background(255, 255, 255);
+
+      //Al liberar el botón (dibujo canvas) le pedimos al modelo ANALIZAR
+      canvas.mouseReleased(classifyCanvas);
+
+      //Botòn para limpiar el canvas 
+      const btnLimpiar = createButton("Limpiar");
+
+      btnLimpiar.position(7, 350);            //Ubicación
+      btnLimpiar.mousePressed(resetCanvas);   //Al presionar el botón
+
+      //Capas para mostrar los resultados
+      label = createDiv("Etiqueta:...");
+      confidence = createDiv("Confianza:...");
+    }
+
+    function classifyCanvas(){
+      //INPUT(CANVAS), OUTPUT(callback function(E, R))
+      classifier.classify(canvas, gotResult);
+    }
+
+    function gotResult(err, result){
+
+      if(err){
+        console.error(err);
+      }
+
+      console.log(result);
+
+      //Calculando el porcentaje
+      const valorConfianza = result[0].confidence.toFixed(2)* 100;
+
+      //Enviar resultados
+      label.html(`Etiqueta: ${result[0].label}`);
+      confidence.html(`Confianza: ${valorConfianza}%`);
+    }
+
+    function resetCanvas(){
+      background(255);
+
+      //Resetear texto
+      label.html(`Etiqueta:...`);
+      confidence.html(`Confianza:...`);
+    }
+
+    //Funciòn predeterminada - P5.js
+    function draw(){
+      //Grosor de làpiz
+      strokeWeight(15);
+
+      //Asignar color (un canal = GRIS | 3 canales = RGB)
+      //stroke(0); - color negro
+      stroke(0, 255, 0)
+
+      //Mientras pulsamos el botòn primario..
+      if(mouseIsPressed){
+
+        line(pmouseX, pmouseY, mouseX, mouseY);
+      }
+    }
+  </script>
+</body>
+</html>
