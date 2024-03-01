@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <title>Imagenes</title>
+        <!-- Required meta tags -->
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+
+        <!-- Manipular DOM -->
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
+
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+ 
+       
+       <!-- Librería ML5 -->
+       <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+        <!-- Bootstrap CSS v5.2.1 -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+            crossorigin="anonymous"
+        />
+
+    </head>
+
+    <body>
+        <header>
+            <!-- place navbar here -->
+        </header>
+        <main>
+            <div class="container p-4 bg-secondary">
+                <div class="m-4">
+                    <div class="card m-4 bg-dark">
+                        <div class="card-header">
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary btn-lg" id="examinar">Examinar</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md-8" id="lienzo">
+
+                                </div>
+
+                                <div class="col-md-4" id="respuestas">
+                                    
+
+                                </div>
+                            </div>
+                            <!-- <div style="height: 280px; width: 280px; background-color: azure;"></div> -->
+
+                        </div>
+                        <div class="card-footer" id="limpiar">
+                            <input type="file" accept=".jpg" class="form-control form-control-sm mb-4" style="width: 20rem;" id="imagen">
+                            <button type="button" class="btn btn-primary" id="subirimg">Subir</button>
+                        </div>
+                    </div>
+                </div>         
+            </div>
+        </main>
+        <footer>
+            <!-- place footer here -->
+        </footer>
+        <!-- Bootstrap JavaScript Libraries -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+            integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+            crossorigin="anonymous"
+        ></script>
+
+        <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+            integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+            crossorigin="anonymous"
+        ></script>
+
+        <script>
+
+                //OBJETOS PUBLICOS
+                let DoodleClassifier  //=> Modelo 
+                let mobileClassifier  //=> Modelo 
+                let canvas;     //=> Lienzo
+                let label;       //=> Objeto encontrado
+                let confidence;  //=> Nivel de confianza
+
+                const $ = id => document.querySelector(id);
+
+                //Antes de cargar
+                function preload(){
+
+                    //Cargar el modelo
+                   DoodleClassifier = ml5.imageClassifier("DoodleNet",modelLoaded);
+                   mobileClassifier = ml5.imageClassifier("MobileNet",modelLoaded);
+                }
+
+                function modelLoaded(){
+                    console.log("Modelo cargado");
+                }
+
+                //Configuraciones
+                function setup(){
+
+                    //Ubicación del lienzo
+                    canvas = createCanvas(280,280);
+                    resizeCanvas(700, 400);         //=> Cambiar el tamaño del lienzo
+
+                    //Backgrouund (1 canal = gris | 3 canales = RGB)
+                    background(255,255,255);
+
+                    const btnLimpiar = createButton("Limpiar");
+                    btnLimpiar.class("btn btn-danger");
+
+                    btnLimpiar.mousePressed(resetCanvas);
+
+                    //Capas para mostrar los resultados
+                    label = createDiv(`<h6 class="text-white"><strong>Nombre :...</strong></h6>`);
+                    confidence = createDiv(`<h6 class="text-white"><strong>Presición :...</strong></h6>`);   
+
+                    //Agrega .elt para acceder al elemento HTML asociado
+                    $("#lienzo").appendChild(canvas.elt); 
+                    $("#respuestas").appendChild(label.elt);
+                    $("#respuestas").appendChild(confidence.elt);
+                    $("#limpiar").appendChild(btnLimpiar.elt);
+                }
+
+                //Al presionar el boton "examinar"
+                $("#examinar").addEventListener("click",classifyCanvas);
+                $("#subirimg").addEventListener("click",uploadImage);
+
+                function uploadImage(){
+                    if($("#imagen").files && $("#imagen").files[0]){
+                        let reader = new FileReader();
+                        reader.onload = function(event){
+                            let img = new Image();
+                            img.src = event.target.result;
+                            img.onload = function (){
+                                image(img, 0, 0, width, height);
+                            }   
+                        }
+
+                        reader.readAsDataURL($("#imagen").files[0]);
+                    }
+                }
+
+                function resetCanvas(){
+
+                    background(255);
+
+                    $("#lienzo").innerHTML = ""; 
+                    $("#respuestas").innerHTML = "";
+                    $("#respuestas").innerHTML = "";
+
+                    //Resetear texto
+                    label = createDiv(`<h6 class="text-white"><strong>Nombre :...</strong></h6>`);
+                    confidence = createDiv(`<h6 class="text-white"><strong>Presición :...</strong></h6>`);   
+
+                    //Agrega .elt para acceder al elemento HTML asociado
+                    $("#lienzo").appendChild(canvas.elt); 
+                    $("#respuestas").appendChild(label.elt);
+                    $("#respuestas").appendChild(confidence.elt);
+
+                }
+
+                function classifyCanvas(){
+
+                    
+
+                    if($("#imagen").files && $("#imagen").files[0]){
+                        //INPUT(CANVAS), OUTPUT(callback function(E, R))
+                        mobileClassifier.classify(canvas, gotResult);
+                    }else{
+                        
+                        //INPUT(CANVAS), OUTPUT(callback function(E, R))
+                       DoodleClassifier.classify(canvas, gotResult);
+                    }
+                }
+
+                function gotResult(err, result){
+
+                    if(err){
+                        console.error(err);
+                    }
+
+                    console.log(result);
+
+                    let resultados = $("#respuestas");
+                    resultados.innerHTML = "";
+
+                    //Mostrar resultados
+                    result.forEach(element => {
+
+                        let datos;
+
+                        //Calculando el porcentaje
+                        const procentaje = element.confidence.toFixed(2)*100;
+                        
+                        let resp = "";
+
+                        resp = `
+
+                        <h6 class="text-white"><strong>Nombre : ${element.label}</strong></h6>
+                        <h6 class="text-white"><strong>Presición : ${procentaje}%</strong></h6>
+                        `;
+                        
+                        resultados.innerHTML += resp;
+                    });
+                }
+
+                function draw(){
+
+                    strokeWeight(10) //=> Grosor del lápiz
+
+                    stroke(0, 255, 0);  //=> Asignar color (un canal = GRIS | 3 canales = RGB)
+                    //stroke(0); - color negro
+
+                    if(mouseIsPressed){
+
+                        line(pmouseX, pmouseY, mouseX, mouseY);
+                    }
+                }
+        </script>
+    </body>
+</html>
